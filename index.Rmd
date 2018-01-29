@@ -1,0 +1,79 @@
+---
+title: "Data Viz Ex 1"
+author: "Weida Xu"
+date: "January 29, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Most common names in 2013
+```{r}
+library(babynames)
+library(ggplot2)    
+library(magrittr)  
+library(dplyr) 
+library(tidyr)
+
+top10_2013 <- babynames %>%
+  filter(year == 2013) %>%
+  group_by(sex, name) %>%
+  summarize(total = sum(n)) %>%
+  arrange(desc(total)) %>%
+  group_by(sex) %>%
+  mutate(rank = row_number()) %>%
+  filter(rank <= 10) %>%
+  arrange(sex, rank)
+
+top10f_2013 <- top10_2013 %>% filter(sex=="F")
+top10m_2013 <- top10_2013 %>% filter(sex=="M")
+top10f_2013
+top10m_2013
+```
+
+# Plotting most common names in 2013 over time
+```{r}
+babynames %>%
+  filter(sex=="F") %>%
+  filter(name %in% top10f_2013$name) %>%
+  ggplot(., aes(year, n)) +
+  geom_line(aes(color=name, group=name))
+
+babynames %>%
+  filter(sex=="M") %>%
+  filter(name %in% top10m_2013$name) %>%
+  ggplot(., aes(year, n)) +
+  geom_line(aes(color=name, group=name))
+
+```
+
+# Top 10 unisex names
+```{r}
+
+top10_unisex <- babynames
+  
+test <- babynames %>%
+  group_by(sex, name) %>%
+  summarize(total = sum(n))
+
+test_dup <- as.data.frame(duplicated(test[2]))
+test2 <- bind_cols(test, test_dup)
+colnames(test2)[4] <- "Duplicate"
+
+test3 <- test2 %>%
+  filter(Duplicate == TRUE) %>%
+  select(1:3) %>%
+  arrange(name)
+
+test4 <- test %>%
+  filter(name %in% test3$name) %>%
+  group_by(name) %>%
+  summarize(totalmf = sum(total)) %>%
+  arrange(desc(totalmf)) %>%
+  slice(1:10)
+
+test4
+
+```
